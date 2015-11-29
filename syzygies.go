@@ -1,11 +1,9 @@
 package main
 
 import (
-
-	// Commandline option parsing
+	"bufio"
 	"flag"
 	"log"
-	"bufio"
 	"os"
 )
 
@@ -19,7 +17,6 @@ type WordWithPath struct {
 	word string
 	path []string
 }
-
 
 func main() {
 
@@ -44,11 +41,7 @@ func main() {
 	startWordWithPath := WordWithPath{*startWord, []string{}}
 	frontier := []WordWithPath{startWordWithPath}
 	explored := make([]WordWithPath, 0)
-	Verbose(FindPath(&wordMap, frontier, explored, *destinationWord))
-	
-
-	//Verbose(GetPossibleWords(&wordMap, "Lab", "Fus"))
-	//Verbose(ListIncludesWord(GetPossibleWords(&wordMap, "ab", "us"), "abacus"))
+	FindPath(&wordMap, frontier, explored, *destinationWord)
 }
 
 func LoadWordListFromFileAndCheckForWords(filename string, startWord string, destinationWord string) (words []string) {
@@ -56,27 +49,27 @@ func LoadWordListFromFileAndCheckForWords(filename string, startWord string, des
 	var foundStartWord bool = false
 	var foundEndWord bool = false
 
-    file, err := os.Open(filename)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer file.Close()
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
 
-    scanner := bufio.NewScanner(file)
-    for scanner.Scan() {
-    	word := scanner.Text()
-    	if word == startWord {
-    		foundStartWord = true
-    	}
-    	if word == destinationWord {
-    		foundEndWord = true
-    	}
-    	words = append(words, word)
-    }
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		word := scanner.Text()
+		if word == startWord {
+			foundStartWord = true
+		}
+		if word == destinationWord {
+			foundEndWord = true
+		}
+		words = append(words, word)
+	}
 
-    if err := scanner.Err(); err != nil {
-        log.Fatal(err)
-    }
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 
 	Verbose("Loaded ", len(words), " words!")
 
@@ -84,7 +77,7 @@ func LoadWordListFromFileAndCheckForWords(filename string, startWord string, des
 		Error("D'oh! Could not find start- or destinationWord in word list!11!!")
 	}
 
-    return
+	return
 }
 
 func SplitWordListIntoSubsets(words []string) (wordMap map[string][]string) {
@@ -97,14 +90,14 @@ func SplitWordListIntoSubsets(words []string) (wordMap map[string][]string) {
 
 		Verbose("Word=", word, " - ", firstTwoLetters, "...", lastTwoLetters)
 
-		wordMap["F" + firstTwoLetters] = append(wordMap["F" + firstTwoLetters], word)
-		wordMap["L" + lastTwoLetters] = append(wordMap["L" + lastTwoLetters], word)
+		wordMap["F"+firstTwoLetters] = append(wordMap["F"+firstTwoLetters], word)
+		wordMap["L"+lastTwoLetters] = append(wordMap["L"+lastTwoLetters], word)
 	}
 	return
 }
 
 func GetFirstTwoLetters(word string) (letters string) {
-	if len(word)>=2 {
+	if len(word) >= 2 {
 		letters = word[0:2]
 	} else {
 		letters = word
@@ -113,7 +106,7 @@ func GetFirstTwoLetters(word string) (letters string) {
 }
 
 func GetLastTwoLetters(word string) (letters string) {
-	if len(word)>=2 {
+	if len(word) >= 2 {
 		letters = word[len(word)-2:]
 	} else {
 		letters = word
@@ -129,26 +122,24 @@ func FindPath(wordMap *map[string][]string, frontier []WordWithPath, explored []
 		frontier = frontier[1:]
 
 		if ListIncludesWord(explored, currentWord.word) {
-			Verbose("Already in explored, NEXT: ", currentWord)
+			Debug("Word", currentWord, "already in explored... Next!", currentWord)
 			continue
 		}
 
 		explored = append(explored, currentWord)
 
-		//Print("FRONTIERSIZE: ", len(frontier), "EXPLOREDSIZE: ", len(explored))
+		Debug("FRONTIERSIZE: ", len(frontier), "EXPLOREDSIZE: ", len(explored))
 
 		firstTwoLetters := GetFirstTwoLetters(currentWord.word)
-		//Verbose("firstTwoLetters of", currentWord.word, "=", firstTwoLetters)
+		Debug("firstTwoLetters of", currentWord.word, "=", firstTwoLetters)
 
 		lastTwoLetters := GetLastTwoLetters(currentWord.word)
-		//Verbose("lastTwoLetters of", currentWord.word, "=", lastTwoLetters)
+		Debug("lastTwoLetters of", currentWord.word, "=", lastTwoLetters)
 
-		possibleWords := GetPossibleWords(wordMap, "L" + firstTwoLetters, "F" + lastTwoLetters)
-		//Print("POSSIBLEWORDS: ", len(possibleWords))
+		possibleWords := GetPossibleWords(wordMap, "L"+firstTwoLetters, "F"+lastTwoLetters)
+		Debug("POSSIBLEWORDS: ", len(possibleWords))
 
 		for _, word := range possibleWords {
-
-			//Verbose("Examining word ", word)
 
 			if word == destinationWord {
 				Debug("FOUND! ", word, currentWord)
@@ -156,28 +147,16 @@ func FindPath(wordMap *map[string][]string, frontier []WordWithPath, explored []
 				return true
 			}
 
-			/*if ListIncludesWord(frontier, word) {
-				//Verbose("Already in frontier: ", word)
-				continue
-			}
-
-			if ListIncludesWord(explored, word) {
-				//Verbose("Already in explored: ", word)
-				continue
-			}*/
-
-			//Verbose("Adding ", word, "to the frontier...")
+			Debug("Adding", word, "to the frontier...")
 			newWord := WordWithPath{}
 			newWord.word = word
 			newWord.path = append(currentWord.path, currentWord.word)
 
 			frontier = append(frontier, newWord)
-
 		}
 
 	}
 
-	//Print("FRONTIER IS EMPTY")
 	return false
 }
 
@@ -189,7 +168,7 @@ func PrintWordChain(lastWord string, parentWord WordWithPath) {
 	}
 	Print(parentWord.word)
 	Print(lastWord)
-	Print("Chainsize:", 2 + len(parentWord.path))
+	Print("Chainsize:", 2+len(parentWord.path))
 }
 
 func ListIncludesWord(list []WordWithPath, word string) bool {
